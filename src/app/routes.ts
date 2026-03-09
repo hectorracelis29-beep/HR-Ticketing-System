@@ -3,7 +3,7 @@ import LoginPage from "./pages/LoginPage";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import CreateTicket from "./pages/CreateTicket";
 import AdminDashboard from "./pages/AdminDashboard";
-import HRDashboard from "./pages/HRDashboard";
+import HRPage from "./pages/HRPage";
 import TicketDetail from "./pages/TicketDetail";
 
 export const router = createBrowserRouter([
@@ -21,7 +21,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/hr",
-    Component: HRDashboard,
+    Component: HRPage,
   },
   {
     path: "/admin",

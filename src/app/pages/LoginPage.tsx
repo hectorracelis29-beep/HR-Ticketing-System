@@ -143,18 +143,6 @@ export default function App() {
             Sign In
           </button>
 
-          <div className="pt-2 text-center">
-            <div className="text-xs text-gray-500 mb-2">login via</div>
-            <div className="google-btn">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" 
-                alt="Google Login" 
-                width={20} 
-                height={20} 
-              />
-            </div>
-          </div>
-
           {/* Demo toggle for testing */}
           <div className="pt-6 mt-6 border-t border-black/5">
             <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center mb-3 font-semibold">
