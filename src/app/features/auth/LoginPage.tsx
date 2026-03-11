@@ -6,8 +6,8 @@ import "../../../styles/login.css";
 
 // --- Mock Data ---
 const mockUsers = [
-  { id: "HR-001", name: "HR Admin", email: "hr@company.com", role: "hr" as const },
-  { id: "SYS-001", name: "System Admin", email: "admin@company.com", role: "admin" as const }
+  { id: "HR-001", name: "HR Admin", email: "hr@company.com", role: "hr" as const, assignedCategories: ["Employment Function", "Personal Function"] },
+  { id: "SYS-001", name: "System Admin", email: "admin@company.com", role: "admin" as const, assignedCategories: [] }
 ];
 
 // --- Custom SVG Components ---
@@ -60,8 +60,9 @@ export default function LoginPage() {
         id: "EMP-1234",
         name: "Sarah Johnson",
         email: "sarah.johnson@company.com",
-        role: "employee",
+        role: "employee" as const,
         department: "Engineering",
+        assignedCategories: [],
       };
     } else if (selectedRole === "hr") {
       mockUser = mockUsers.find(u => u.role === "hr");
@@ -95,12 +96,12 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <img 
               src={logo} 
-              alt="HR Ticketing System Logo" 
+              alt="DMTS Logo"
               className="w-16 h-16 rounded-2xl shadow-md object-cover"
             />
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-black leading-tight">
-            HUMAN RESOURCE<br/>TICKETING
+            DMTS
           </h1>
         </div>
 
@@ -160,7 +161,7 @@ export default function LoginPage() {
                       : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                   }`}
                 >
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                  {role === 'hr' ? 'HR' : role.charAt(0).toUpperCase() + role.slice(1)}
                 </button>
               ))}
             </div>

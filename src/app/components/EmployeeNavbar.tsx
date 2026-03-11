@@ -21,7 +21,7 @@ export function EmployeeNavbar() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-2">
             <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg" />
-            <span className="font-semibold text-lg">HR Ticketing</span>
+            <span className="font-semibold text-lg">DMTS</span>
           </div>
 
           <div className="flex items-center gap-1">

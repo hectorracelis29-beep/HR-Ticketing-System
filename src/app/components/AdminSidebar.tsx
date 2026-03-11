@@ -3,10 +3,11 @@ import { cn } from "../components/ui/utils";
 import { 
   LayoutDashboard, 
   Ticket, 
-  UserCircle, 
-  FileText, 
-  Settings
+  Users, 
+  Settings,
+  Network
 } from "lucide-react";
+import logo from "../../assets/logo.png";
 
 interface AdminSidebarProps {
   className?: string;
@@ -17,13 +18,17 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
 
   const navItems = [
     { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/admin/tickets", label: "Tickets", icon: Ticket },
+    { path: "/admin/assignment-matrix", label: "Assignment Matrix", icon: Network },
+    { path: "/admin/employees", label: "Employees", icon: Users },
   ];
 
   return (
     <div className={cn("w-64 bg-white border-r border-gray-200 h-screen sticky top-0", className)}>
       <div className="p-6">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-lg">HR Tickets</span>
+          <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg" />
+          <span className="font-semibold text-lg">DMTS</span>
         </div>
       </div>
 

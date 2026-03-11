@@ -25,32 +25,7 @@ import { Ticket, FolderOpen, AlertCircle, Clock, Users, LogOut } from "lucide-re
 import { mockTickets, categories, hrStaff } from "../../data/mockData";
 import { useAuth } from "../../contexts/AuthContext";
 
-// --- Honeycomb Pattern Component ---
-const HoneycombPattern = ({ className }: { className?: string }) => (
-  <svg 
-    className={`absolute pointer-events-none ${className}`} 
-    width="250" 
-    height="250" 
-    viewBox="0 0 450 450" 
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <defs>
-      <polygon 
-        id="hex-admin" 
-        points="0,-100 86.6,-50 86.6,50 0,100 -86.6,50 -86.6,-50" 
-      />
-    </defs>
-    <g opacity="0.6" stroke="#C9D866" strokeWidth="12" fill="none" strokeLinejoin="round">
-      <use href="#hex-admin" x="173.2" y="150" />
-      <use href="#hex-admin" x="86.6" y="0" />
-      <use href="#hex-admin" x="259.8" y="0" />
-      <use href="#hex-admin" x="0" y="150" />
-      <use href="#hex-admin" x="346.4" y="150" />
-      <use href="#hex-admin" x="86.6" y="300" />
-      <use href="#hex-admin" x="259.8" y="300" />
-    </g>
-  </svg>
-);
+// --- KPIs only used in this file ---
 
 export default function AdminDashboard() {
   const [filterCategory, setFilterCategory] = useState("all");
@@ -84,9 +59,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 relative overflow-hidden">
-      {/* Honeycomb Backgrounds - fully visible corners */}
-      <HoneycombPattern className="top-0 left-0 scale-150" />
-      <HoneycombPattern className="bottom-0 right-0 scale-150 rotate-180" />
       <AdminSidebar />
 
       <div className="flex-1 overflow-auto">

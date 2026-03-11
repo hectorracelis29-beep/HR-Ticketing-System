@@ -2,7 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { LoginPage } from "./features/auth";
 import { EmployeeDashboard, CreateTicket, TicketDetail } from "./features/employee";
 import { HRPage, HREmployees } from "./features/hr";
-import { AdminDashboard } from "./features/admin";
+import { AdminDashboard, AdminTickets, AdminAssignmentMatrix, AdminEmployees } from "./features/admin";
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +28,18 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     Component: AdminDashboard,
+  },
+  {
+    path: "/admin/tickets",
+    Component: AdminTickets,
+  },
+  {
+    path: "/admin/assignment-matrix",
+    Component: AdminAssignmentMatrix,
+  },
+  {
+    path: "/admin/employees",
+    Component: AdminEmployees,
   },
   {
     path: "/ticket/:id",

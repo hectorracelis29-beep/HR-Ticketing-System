@@ -1,25 +1,23 @@
 import React, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { mockTickets } from "../../data/mockData";
+import logo from "../../../assets/logo.png";
 import { 
   Ticket, 
-  FolderOpen, 
-  Clock, 
+  FolderOpen,
+  Clock,
   LogOut, 
   LayoutDashboard, 
-  Settings, 
   Users, 
   Bell,
   Search,
-  Filter,
   ChevronRight,
   Menu,
   ArrowLeft,
   Send,
   MoreVertical,
   Paperclip,
-  Zap,
-  ShieldCheck,
-  UserCheck,
-  Mail
+  Filter,
 } from "lucide-react";
 
 // --- Mock UI Components ---
@@ -124,38 +122,39 @@ interface SettingsState {
 }
 
 export default function HRPage() {
-  const user: User = {
-    name: "Alexis Joyce Fausto",
-    role: "hr-specialist",
-    assignedCategories: ["Payroll", "Benefits", "Onboarding"]
-  };
+  const { user } = useAuth();
+  
+  // Get HR's assigned categories from user.assignedCategories
+  const assignedCategories = user.assignedCategories || [];
+  
+  // Filter tickets that are assigned to this HR user and match their categories
+  const hrTickets = mockTickets.filter(ticket => 
+    ticket.assignedTo === user.name || 
+    (ticket.category && assignedCategories.includes(ticket.category))
+  );
+
+  // Calculate stats based on filtered tickets
+  const pendingCount = hrTickets.filter(t => t.status === "open").length;
+  const inProgressCount = hrTickets.filter(t => t.status === "in-progress").length;
+  const resolvedCount = hrTickets.filter(t => t.status === "resolved").length;
 
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [selectedTicket, setSelectedTicket] = useState<TicketData | null>(null);
-
-  // Settings State
-  const [settings, setSettings] = useState<SettingsState>({
-    autoRoute: true,
-    outOfOffice: false,
-    emailNotifications: true,
-    slaAlerts: true,
-    weeklyDigest: false,
-  });
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  
+  // Get selected ticket details
+  const selectedTicket = hrTickets.find(t => t.id === selectedTicketId);
 
   const menuItems = [
     { id: "dashboard", label: "Overview", icon: LayoutDashboard },
     { id: "tickets", label: "Tickets", icon: Ticket },
-    { id: "employees", label: "Employees", icon: Users },
   ];
 
-  const ticketsData: TicketData[] = [
-    { id: "#TK-9281", name: "John Doe", cat: "Payroll", status: "Open", color: "text-blue-600 bg-blue-50", date: "Oct 24, 2023", priority: "High", subject: "Incorrect overtime calculation for September" },
-    { id: "#TK-9282", name: "Sarah Hall", cat: "Benefits", status: "In Progress", color: "text-orange-600 bg-orange-50", date: "Oct 23, 2023", priority: "Medium", subject: "Health insurance enrollment query" },
-    { id: "#TK-9283", name: "Mike Ross", cat: "Onboarding", status: "Resolved", color: "text-green-600 bg-green-50", date: "Oct 22, 2023", priority: "Low", subject: "Laptop delivery status" },
-    { id: "#TK-9284", name: "Emma Wood", cat: "Payroll", status: "Open", color: "text-blue-600 bg-blue-50", date: "Oct 21, 2023", priority: "High", subject: "Direct deposit update" },
-  ];
+  // Filter tickets by category if selected
+  const displayTickets = filterCategory === "all" 
+    ? hrTickets 
+    : hrTickets.filter(t => t.category === filterCategory);
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FA] text-gray-900 font-sans">
@@ -166,10 +165,8 @@ export default function HRPage() {
         } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col z-50`}
       >
         <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#B0BF00] flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold">HR</span>
-          </div>
-          {isSidebarOpen && <span className="font-bold text-xl tracking-tight">Vantage</span>}
+          <img src={logo} alt="Logo" className="w-10 h-10 rounded-xl" />
+          <span className="font-bold text-xl tracking-tight">DMTS</span>
         </div>
 
         <nav className="flex-1 px-3 space-y-1 mt-4">
@@ -180,7 +177,7 @@ export default function HRPage() {
                 key={item.id}
                 onClick={() => {
                   setActiveTab(item.id);
-                  setSelectedTicket(null);
+                  setSelectedTicketId(null);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   activeTab === item.id 
@@ -253,7 +250,7 @@ export default function HRPage() {
           {selectedTicket ? (
             <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-right-4 duration-300">
               <button 
-                onClick={() => setSelectedTicket(null)}
+                onClick={() => setSelectedTicketId(null)}
                 className="flex items-center gap-2 text-gray-500 hover:text-[#B0BF00] mb-6 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -266,11 +263,11 @@ export default function HRPage() {
                   <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
                     <div className="flex justify-between items-start mb-6">
                       <div>
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${selectedTicket.color} mb-3 inline-block`}>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${selectedTicket.status === 'open' ? 'bg-blue-100 text-blue-700' : selectedTicket.status === 'in-progress' ? 'bg-orange-100 text-orange-700' : selectedTicket.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'} mb-3 inline-block`}>
                           {selectedTicket.status}
                         </span>
                         <h1 className="text-2xl font-bold">{selectedTicket.subject}</h1>
-                        <p className="text-gray-500 mt-1">Ticket {selectedTicket.id} • Created on {selectedTicket.date}</p>
+                        <p className="text-gray-500 mt-1">Ticket {selectedTicket.id} • Created on {new Date(selectedTicket.createdAt).toLocaleDateString()}</p>
                       </div>
                       <button className="p-2 hover:bg-gray-50 rounded-lg">
                         <MoreVertical className="w-5 h-5 text-gray-400" />
@@ -281,10 +278,10 @@ export default function HRPage() {
                       {/* Message: Employee */}
                       <div className="flex gap-4">
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
-                          {selectedTicket.name.charAt(0)}
+                          {selectedTicket.employeeName.charAt(0)}
                         </div>
                         <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4 max-w-[85%]">
-                          <p className="text-sm font-bold mb-1">{selectedTicket.name} <span className="text-[10px] text-gray-400 font-normal ml-2">10:15 AM</span></p>
+                          <p className="text-sm font-bold mb-1">{selectedTicket.employeeName} <span className="text-[10px] text-gray-400 font-normal ml-2">10:15 AM</span></p>
                           <p className="text-sm text-gray-600 leading-relaxed">
                             Hello HR Team, I noticed that my overtime for the last week of September wasn't reflected in my latest payslip. I worked 8 hours extra. Can you please check?
                           </p>
@@ -352,15 +349,12 @@ export default function HRPage() {
                         </div>
                         <div>
                           <p className="text-xs text-gray-400 mb-1">Category</p>
-                          <div className="text-xs font-bold bg-gray-50 border border-gray-100 rounded-lg p-2">{selectedTicket.cat}</div>
+                          <div className="text-xs font-bold bg-gray-50 border border-gray-100 rounded-lg p-2">{selectedTicket.category}</div>
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-8 space-y-3">
-                      <Button variant="outline" className="w-full justify-center text-sm py-3">
-                        Reassign Ticket
-                      </Button>
                       <Button className="w-full justify-center text-sm py-3">
                         Mark as Resolved
                       </Button>
@@ -502,20 +496,20 @@ export default function HRPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {ticketsData.map((ticket) => (
+                        {displayTickets.map((ticket) => (
                           <tr key={ticket.id} className="hover:bg-gray-50/80 transition-colors group">
                             <td className="px-6 py-4 font-bold text-sm">{ticket.id}</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
-                                  {ticket.name.charAt(0)}
+                                  {ticket.employeeName.charAt(0)}
                                 </div>
-                                <span className="text-sm font-medium">{ticket.name}</span>
+                                <span className="text-sm font-medium">{ticket.employeeName}</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">{ticket.cat}</td>
+                            <td className="px-6 py-4 text-sm text-gray-500">{ticket.category}</td>
                             <td className="px-6 py-4">
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${ticket.color}`}>
+                              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${ticket.status === 'open' ? 'bg-blue-100 text-blue-700' : ticket.status === 'in-progress' ? 'bg-orange-100 text-orange-700' : ticket.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                                 {ticket.status}
                               </span>
                             </td>
@@ -523,7 +517,7 @@ export default function HRPage() {
                               <Button 
                                 variant="ghost" 
                                 className="text-xs py-1.5 md:opacity-0 group-hover:opacity-100"
-                                onClick={() => setSelectedTicket(ticket)}
+                                onClick={() => setSelectedTicketId(ticket.id)}
                               >
                                 Manage
                               </Button>
