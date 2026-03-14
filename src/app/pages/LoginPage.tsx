@@ -6,43 +6,48 @@ import "../../styles/login.css";
 
 // --- Mock Data ---
 const mockUsers = [
-  { id: "HR-001", name: "HR Admin", email: "hr@company.com", role: "hr" as const },
-  { id: "SYS-001", name: "System Admin", email: "admin@company.com", role: "admin" as const }
+  { id: "HR-001", name: "HR Admin", email: "hr@company.com", role: "hr" },
+  { id: "SYS-001", name: "System Admin", email: "admin@company.com", role: "admin" }
 ];
 
 
-export default function App() {
+export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState("employee");
 
-  const handleLogin = (e) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Mock login - set user based on selected role
+    // Mock login - determine role from email
+    let role = "employee";
+    if (email.toLowerCase().includes("hr") || email.includes("@company.com")) {
+      role = "hr";
+    } else if (email.toLowerCase().includes("admin")) {
+      role = "admin";
+    }
+
+    // Mock user based on role
     let mockUser;
-    if (selectedRole === "employee") {
+    if (role === "employee") {
       mockUser = {
         id: "EMP-1234",
         name: "Sarah Johnson",
         email: "sarah.johnson@company.com",
-        role: "employee",
+        role: "employee" as const,
         department: "Engineering",
       };
-    } else if (selectedRole === "hr") {
-      mockUser = mockUsers.find(u => u.role === "hr");
     } else {
-      mockUser = mockUsers.find(u => u.role === "admin");
+      mockUser = mockUsers.find(u => u.role === role);
     }
 
     setUser(mockUser);
 
     // Route based on role
-    if (selectedRole === "admin") {
+    if (role === "admin") {
       navigate("/admin");
-    } else if (selectedRole === "hr") {
+    } else if (role === "hr") {
       navigate("/hr");
     } else {
       navigate("/employee");
@@ -107,28 +112,6 @@ export default function App() {
             Sign In
           </button>
 
-          {/* Demo toggle for testing */}
-          <div className="pt-6 mt-6 border-t border-black/5">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center mb-3 font-semibold">
-              Demo Mode - Select Role
-            </p>
-            <div className="flex gap-2">
-              {['employee', 'hr', 'admin'].map((role) => (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => setSelectedRole(role)}
-                  className={`flex-1 py-1.5 text-xs rounded-md transition-colors border ${
-                    selectedRole === role 
-                      ? "bg-gray-800 text-white border-gray-800" 
-                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
         </form>
 
       </div>
