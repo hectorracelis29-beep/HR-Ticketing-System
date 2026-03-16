@@ -8,7 +8,7 @@ import logo from "../../assets/logo.png";
 export function EmployeeNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { path: "/employee", label: "Home", icon: Home },
@@ -49,13 +49,16 @@ export function EmployeeNavbar() {
 
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.role.toUpperCase()}</p>
+              <p className="text-sm font-medium">{user?.name || 'User'}</p>
+              <p className="text-xs text-gray-500">{user?.role?.toUpperCase() || 'EMPLOYEE'}</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/")}
+              onClick={async () => {
+                await logout();
+                navigate("/");
+              }}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout

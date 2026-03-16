@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router";
 import { 
   Ticket, 
   FolderOpen, 
@@ -105,6 +107,8 @@ interface SettingsState {
 }
 
 export default function HRPage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const user: User = {
     name: "Alexis Joyce Fausto",
     role: "hr-specialist",
@@ -177,7 +181,13 @@ export default function HRPage() {
         </nav>
 
         <div className="p-4 border-t border-gray-100">
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-600 transition-colors">
+          <button 
+            onClick={async () => {
+              await logout();
+              navigate("/");
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-600 transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             {isSidebarOpen && <span className="font-medium">Sign Out</span>}
           </button>
@@ -367,7 +377,7 @@ export default function HRPage() {
                   {/* Welcome Section */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#B0BF00] rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-[#B0BF00]/20">
                     <div className="relative z-10">
-                      <h1 className="text-3xl font-bold">Welcome back, {user.name.split(' ')[0]}!</h1>
+<h1 className="text-3xl font-bold">Welcome back, {user?.name?.split(' ')[0] || 'Team'}!</h1>
                       <p className="mt-2 text-white/80 max-w-md">
                         You have 12 tickets waiting for your attention today across {user.assignedCategories.length} categories.
                       </p>
@@ -400,7 +410,7 @@ export default function HRPage() {
                         <Button variant="ghost" className="text-xs">Manage Assignments</Button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {user.assignedCategories.map((cat) => (
+                        {(user?.assignedCategories ?? []).map((cat) => (
                           <div key={cat} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-[#B0BF00]/30 transition-all cursor-pointer group">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
@@ -485,7 +495,7 @@ export default function HRPage() {
                       <tbody className="divide-y divide-gray-50">
                         {ticketsData.map((ticket) => (
                           <tr key={ticket.id} className="hover:bg-gray-50/80 transition-colors group">
-                            <td className="px-6 py-4 font-bold text-sm">{ticket.id}</td>
+                            <td className="px-6 py-4 font-bold text-sm">{ticket.ticketNumber || ticket.id}</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">

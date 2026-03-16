@@ -1,58 +1,44 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
-import { useAuth } from "../contexts/AuthContext";
 import logo from "../../assets/logo.png";
 import "../../styles/login.css";
 
-// --- Mock Data ---
-const mockUsers = [
-  { id: "HR-001", name: "HR Admin", email: "hr@company.com", role: "hr" },
-  { id: "SYS-001", name: "System Admin", email: "admin@company.com", role: "admin" }
-];
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { ref, set } from 'firebase/database';
+import { auth, database } from '../../lib/firebase';
+import type { UserRole } from '../data/mockData';
 
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mock login - determine role from email
-    let role = "employee";
-    if (email.toLowerCase().includes("hr") || email.includes("@company.com")) {
-      role = "hr";
-    } else if (email.toLowerCase().includes("admin")) {
-      role = "admin";
-    }
+    setSubmitting(true);
+    setError('');
 
-    // Mock user based on role
-    let mockUser;
-    if (role === "employee") {
-      mockUser = {
-        id: "EMP-1234",
-        name: "Sarah Johnson",
-        email: "sarah.johnson@company.com",
-        role: "employee" as const,
-        department: "Engineering",
-      };
-    } else {
-      mockUser = mockUsers.find(u => u.role === role);
-    }
-
-    setUser(mockUser);
-
-    // Route based on role
-    if (role === "admin") {
-      navigate("/admin");
-    } else if (role === "hr") {
-      navigate("/hr");
-    } else {
-      navigate("/employee");
+    try {
+      // Firebase auth - AuthContext listener will handle profile + redirect
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      // Clear form on success (redirect handled by PublicLayout)
+      setEmail('');
+      setPassword('');
+      
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
+
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center relative bg-[#f8f9fa] overflow-hidden font-sans">
@@ -104,12 +90,28 @@ export default function LoginPage() {
             />
           </div>
 
+          {error && (
+            <div className="text-red-600 text-sm text-center p-3 rounded-md bg-red-50 border border-red-200">
+              {error}
+            </div>
+          )}
+
           <button 
             type="submit" 
             style={{ backgroundColor: 'rgb(176, 191, 0)' }}
             className="w-full h-11 rounded-md text-white font-medium text-base shadow-md hover:opacity-90 active:scale-[0.98] transition-all mt-2"
+            disabled={submitting}
           >
-            Sign In
+            {submitting ? 'Signing In...' : 'Sign In'}
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => navigate('/register')}
+            style={{ backgroundColor: 'rgb(107, 114, 0)' }}
+            className="w-full h-11 rounded-md text-white font-medium text-base shadow-md hover:opacity-90 active:scale-[0.98] transition-all mt-2"
+          >
+            Create Account - Register
           </button>
 
         </form>

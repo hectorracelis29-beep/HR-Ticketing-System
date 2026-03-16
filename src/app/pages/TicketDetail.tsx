@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
@@ -25,7 +25,10 @@ import {
   UserCheck,
   Lock,
 } from "lucide-react";
-import { mockTickets, categories } from "../data/mockData";
+import { useTickets } from "../contexts/TicketContext";
+import { categories } from "../data/mockData";
+
+
 
 
 
@@ -33,16 +36,53 @@ export default function TicketDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, hasPermission } = useAuth();
-  const ticket = mockTickets.find((t) => t.id === id);
+const { tickets = [], updateTicket } = useTickets() || {};
+  const ticket = tickets.find((t) => t.id === id);
 
-  const [status, setStatus] = useState(ticket?.status || "open");
-  const [assignedTo, setAssignedTo] = useState(ticket?.assignedTo || "");
+
+
+  const [status, setStatus] = useState("open");
+  const [assignedTo, setAssignedTo] = useState("");
   const [newComment, setNewComment] = useState("");
   const [internalNote, setInternalNote] = useState("");
 
-  // Get HR staff allowed for this ticket's category
-  const allowedHRForCategory =
-    categories.find((c) => c.name === ticket?.category)?.assignedHR || [];
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    if (ticket) {
+      setStatus(ticket.status);
+      setAssignedTo(ticket.assignedTo || "");
+    }
+  }, [ticket]);
+
+  const handleSave = useCallback(async () => {
+    if (!ticket) return;
+    const updates: Record<string, any> = {};
+    if (status !== ticket.status) {
+      updates.status = status as any;
+    }
+    if (assignedTo !== ticket.assignedTo) {
+      updates.assignedTo = assignedTo;
+    }
+    if (Object.keys(updates).length === 0) return;
+
+    setIsUpdating(true);
+    const success = await updateTicket(ticket.id, updates);
+    setIsUpdating(false);
+    if (success) {
+      // Success - data will sync automatically
+      console.log("Ticket updated successfully");
+    } else {
+      alert("Failed to update ticket");
+    }
+  }, [ticket, status, assignedTo, updateTicket]);
+
+  const { officers } = useAuth();
+
+  // Get HR staff allowed for this ticket's category (officers with matching assigned categories)
+  const allowedHRForCategory = officers.filter((officer) =>
+    !ticket?.category || officer.assignedCategories?.includes(ticket.category)
+  );
 
   // Determine if assignment dropdown should be shown, disabled, or hidden
   const showAssignment =
@@ -127,7 +167,7 @@ export default function TicketDetail() {
                 </Button>
               </Link>
               <div className="flex-1">
-                <h1 className="text-2xl font-semibold text-gray-900">{ticket.id}</h1>
+                <h1 className="text-2xl font-semibold text-gray-900">{ticket.ticketNumber || ticket.id}</h1>
                 <p className="text-gray-600 text-sm mt-0.5">{ticket.subject}</p>
                 {/* Assigned HR Display */}
                 {ticket.assignedTo && (
@@ -169,15 +209,15 @@ export default function TicketDetail() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-xs text-gray-500">Name</p>
-                    <p className="text-sm font-medium mt-1">{ticket.employeeName}</p>
+                    <p className="text-sm font-medium mt-1">{ticket.employeeName || ticket.createdBy || 'Unknown'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Employee ID</p>
-                    <p className="text-sm font-medium mt-1">{ticket.employeeId}</p>
+                    <p className="text-sm font-medium mt-1">{ticket.employeeId || ticket.createdByUid?.slice(-4).toUpperCase() || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Department</p>
-                    <p className="text-sm font-medium mt-1">{ticket.department}</p>
+                    <p className="text-sm font-medium mt-1">{ticket.department || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Priority</p>
@@ -208,7 +248,7 @@ export default function TicketDetail() {
                     {ticket.description}
                   </p>
                 </div>
-                {ticket.attachments && ticket.attachments.length > 0 && (
+{ticket.attachments?.length > 0 && (
                   <>
                     <Separator />
                     <div>
@@ -217,7 +257,7 @@ export default function TicketDetail() {
                         Attachments
                       </p>
                       <div className="space-y-2">
-                        {ticket.attachments.map((file, index) => (
+{(ticket.attachments ?? []).map((file, index) => (
                           <div
                             key={index}
                             className="flex items-center gap-2 p-2 bg-gray-50 rounded text-sm"
@@ -243,12 +283,12 @@ export default function TicketDetail() {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  {ticket.comments.length === 0 ? (
+{(ticket.comments ?? []).length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">
                       No comments yet. Be the first to comment!
                     </p>
                   ) : (
-                    ticket.comments.map((comment) => (
+(ticket.comments ?? []).map((comment) => (
                       <div key={comment.id} className="flex gap-3">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                           <MessageSquare className="w-4 h-4 text-blue-600" />
@@ -363,9 +403,9 @@ export default function TicketDetail() {
                           <SelectValue placeholder="Select staff member" />
                         </SelectTrigger>
                         <SelectContent>
-                          {allowedHRForCategory.map((staff) => (
-                            <SelectItem key={staff} value={staff}>
-                              {staff}
+                          {allowedHRForCategory.map((officer) => (
+                            <SelectItem key={officer.uid || officer.name} value={officer.name}>
+                              {officer.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -373,7 +413,7 @@ export default function TicketDetail() {
                       
                       {/* Category-specific HR info */}
                       <p className="text-xs text-gray-500">
-                        Available for {ticket.category}
+                        {allowedHRForCategory.length} officer{allowedHRForCategory.length !== 1 ? 's' : ''} available for {ticket.category}
                       </p>
                       
                       {/* Assignment lock warning */}
@@ -398,10 +438,12 @@ export default function TicketDetail() {
                   )}
 
                   <Button 
+                    onClick={handleSave}
+                    disabled={isUpdating}
                     style={{ backgroundColor: 'rgb(176, 191, 0)', borderColor: 'rgb(176, 191, 0)' }}
                     className="w-full hover:bg-opacity-90 text-white"
                   >
-                    Save Changes
+                    {isUpdating ? "Saving..." : "Save Changes"}
                   </Button>
                 </CardContent>
               </Card>

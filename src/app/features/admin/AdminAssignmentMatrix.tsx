@@ -24,7 +24,7 @@ interface CategoryAssignment {
 
 export default function AdminAssignmentMatrix() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   
   // State for assignments (editable)
   const [assignments, setAssignments ] = useState<CategoryAssignment[]>(
@@ -83,10 +83,13 @@ export default function AdminAssignmentMatrix() {
           <div className="flex justify-end items-center mb-8">
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm font-medium">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.role.toUpperCase()}</p>
+                <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
+                <p className="text-xs text-gray-500">{user?.role?.toUpperCase() || 'ADMIN'}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+              <Button variant="ghost" size="sm" onClick={async () => {
+                  await logout();
+                  navigate("/");
+                }}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>

@@ -16,7 +16,7 @@ interface EmployeeSidebarProps {
 export function EmployeeSidebar({ className }: EmployeeSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { path: "/employee", label: "Dashboard", icon: LayoutDashboard },
@@ -61,17 +61,20 @@ export function EmployeeSidebar({ className }: EmployeeSidebarProps) {
       <div className="p-4 border-t border-gray-200 space-y-3">
         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-            {user.name.charAt(0).toUpperCase()}
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-sm truncate">{user.name}</p>
-            <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+            <p className="font-medium text-sm truncate">{user?.name || 'User'}</p>
+            <p className="text-xs text-gray-500 capitalize">{user?.role || 'employee'}</p>
           </div>
         </div>
         <Button
           variant="ghost"
           className="w-full justify-start h-12 text-sm hover:bg-red-50 hover:text-red-600 border border-gray-200"
-          onClick={() => navigate("/")}
+          onClick={async () => {
+            await logout();
+            navigate("/");
+          }}
         >
           <LogOut className="w-4 h-4 mr-2" />
           Logout

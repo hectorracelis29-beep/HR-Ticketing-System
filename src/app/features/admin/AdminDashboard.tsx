@@ -1,4 +1,4 @@
-import { useState } from "react";
+ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { AdminSidebar } from "../../components/AdminSidebar";
 import { KPICard } from "../../components/KPICard";
@@ -22,7 +22,8 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { Ticket, FolderOpen, AlertCircle, Clock, Users, LogOut } from "lucide-react";
-import { mockTickets, categories, hrStaff } from "../../data/mockData";
+import { useTickets } from "../../contexts/TicketContext";
+import { categories, hrStaff } from "../../data/mockData";
 import { useAuth } from "../../contexts/AuthContext";
 
 // --- KPIs only used in this file ---
@@ -33,20 +34,22 @@ export default function AdminDashboard() {
   const [filterPriority, setFilterPriority] = useState("all");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tickets, loading } = useTickets();
 
   // Calculate KPIs
-  const totalTickets = mockTickets.length;
-  const openTickets = mockTickets.filter(
+  const totalTickets = tickets.length;
+  const openTickets = tickets.filter(
     (t) => t.status === "open" || t.status === "in-progress"
   ).length;
-  const overdueTickets = mockTickets.filter((t) => {
+  const overdueTickets = tickets.filter((t) => {
+    if (!t.updatedAt) return false;
     const daysSinceUpdate =
       (new Date().getTime() - new Date(t.updatedAt).getTime()) / (1000 * 60 * 60 * 24);
     return daysSinceUpdate > 3 && t.status !== "resolved" && t.status !== "closed";
   }).length;
 
   // Filter tickets
-  let filteredTickets = mockTickets;
+  let filteredTickets = tickets;
   if (filterCategory !== "all") {
     filteredTickets = filteredTickets.filter((t) => t.category === filterCategory);
   }
@@ -92,7 +95,7 @@ export default function AdminDashboard() {
             />
             <KPICard
               title="Avg Resolution Time"
-              value="2.4 days"
+              value="N/A"
               icon={Clock}
               color="text-green-600"
             />
@@ -108,7 +111,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
-                {categories.map((category) => (
+{categories && categories.length > 0 ? categories.map((category) => (
                   <div
                     key={category.name}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
@@ -121,22 +124,23 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">Assigned to:</span>
-                      <Select defaultValue={category.assignedHR[0]}>
+                      <Select defaultValue={hrStaff && hrStaff.length > 0 ? hrStaff[0] : ""}>
                         <SelectTrigger className="h-9 w-48">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {hrStaff.map((hr) => (
+                          {hrStaff && hrStaff.length > 0 ? hrStaff.map((hr) => (
                             <SelectItem key={hr} value={hr}>
                               {hr}
                             </SelectItem>
-                          ))}
+                          )) : <SelectItem value="">No staff available</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                ))}
+                )) : <p className="text-gray-500 text-sm p-4">No categories available</p>}
               </div>
+
             </CardContent>
           </Card>
 
@@ -151,11 +155,12 @@ export default function AdminDashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((cat) => (
+                    {categories && categories.length > 0 ? categories.map((cat) => (
                       <SelectItem key={cat.name} value={cat.name}>
                         {cat.name}
                       </SelectItem>
-                    ))}
+                    )) : null}
+
                   </SelectContent>
                 </Select>
               </div>
@@ -212,32 +217,42 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTickets.map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell className="font-medium">{ticket.id}</TableCell>
-                    <TableCell>{ticket.employeeName}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div className="font-medium">{ticket.category}</div>
-                        <div className="text-gray-500 text-xs">{ticket.subcategory}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <PriorityBadge priority={ticket.priority} />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={ticket.status} />
-                    </TableCell>
-                    <TableCell>{ticket.assignedTo || "Unassigned"}</TableCell>
-                    <TableCell>
-                      <Link to={`/ticket/${ticket.id}`}>
-                        <Button variant="ghost" size="sm">
-                          View
-                        </Button>
-                      </Link>
+                {filteredTickets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      No tickets available. Create some via Employee Dashboard.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredTickets.map((ticket) => (
+                    <TableRow key={ticket.id}>
+                      <TableCell className="font-medium">{ticket.id}</TableCell>
+                      <TableCell>{ticket.createdBy}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">{ticket.category}</div>
+                          {ticket.subcategory && (
+                            <div className="text-gray-500 text-xs">{ticket.subcategory}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <PriorityBadge priority={ticket.priority} />
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={ticket.status} />
+                      </TableCell>
+                      <TableCell>{ticket.assignedOfficer || "Unassigned"}</TableCell>
+                      <TableCell>
+                        <Link to={`/ticket/${ticket.id}`}>
+                          <Button variant="ghost" size="sm">
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

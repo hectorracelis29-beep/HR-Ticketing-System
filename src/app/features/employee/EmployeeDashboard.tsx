@@ -13,13 +13,16 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { Ticket, FolderOpen, CheckCircle, PlusCircle } from "lucide-react";
-import { mockTickets } from "../../data/mockData";
+import { useTickets } from "../../contexts/TicketContext";
+
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
+  const { tickets } = useTickets();
   
   // Filter tickets for current employee
-  const employeeTickets = mockTickets.filter((t) => t.employeeName === user.name);
+  const employeeTickets = tickets.filter((t: any) => t.createdBy === user.name);
+
   
   const openCount = employeeTickets.filter((t) => t.status === "open" || t.status === "in-progress").length;
   const waitingCount = employeeTickets.filter((t) => t.status === "waiting").length;

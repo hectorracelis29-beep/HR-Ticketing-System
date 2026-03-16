@@ -21,7 +21,8 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { Ticket, Search, Filter, Download, LogOut } from "lucide-react";
-import { mockTickets, categories } from "../../data/mockData";
+import { categories } from "../../data/mockData";
+import { useTickets } from "../../contexts/TicketContext";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function AdminTickets() {
@@ -30,10 +31,11 @@ export default function AdminTickets() {
   const [filterPriority, setFilterPriority] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { tickets = [], loading = false } = useTickets() || {};
 
   // Filter tickets
-  let filteredTickets = mockTickets;
+  let filteredTickets = tickets;
   
   if (filterCategory !== "all") {
     filteredTickets = filteredTickets.filter((t) => t.category === filterCategory);
@@ -47,9 +49,9 @@ export default function AdminTickets() {
   if (searchQuery) {
     filteredTickets = filteredTickets.filter(
       (t) =>
-        t.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.id.toLowerCase().includes(searchQuery.toLowerCase())
+        (t.subject || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.createdBy || t.employeeName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.ticketNumber || t.id).toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
 
@@ -69,10 +71,13 @@ export default function AdminTickets() {
           <div className="flex justify-end items-center mb-8">
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm font-medium">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.role.toUpperCase()}</p>
+                <p className="text-sm font-medium">{user?.name ?? 'Admin'}</p>
+                <p className="text-xs text-gray-500">{user!.role.toUpperCase()}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+              <Button variant="ghost" size="sm" onClick={async () => {
+                  await logout();
+                  navigate("/");
+                }}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
@@ -231,7 +236,13 @@ export default function AdminTickets() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTickets.length === 0 ? (
+{loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      Loading tickets...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredTickets.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No tickets found matching your filters.
@@ -240,8 +251,8 @@ export default function AdminTickets() {
                 ) : (
                   filteredTickets.map((ticket) => (
                     <TableRow key={ticket.id}>
-                      <TableCell className="font-medium">{ticket.id}</TableCell>
-                      <TableCell>{ticket.employeeName}</TableCell>
+                      <TableCell className="font-medium">{ticket.ticketNumber || ticket.id}</TableCell>
+                      <TableCell>{ticket.createdBy || ticket.employeeName || 'N/A'}</TableCell>
                       <TableCell>
                         <div className="text-sm">
                           <div className="font-medium">{ticket.category}</div>
@@ -254,9 +265,9 @@ export default function AdminTickets() {
                       <TableCell>
                         <StatusBadge status={ticket.status} />
                       </TableCell>
-                      <TableCell>{ticket.assignedTo || "Unassigned"}</TableCell>
+                      <TableCell>{ticket.assignedTo || ticket.assignedOfficer || "Unassigned"}</TableCell>
                       <TableCell className="text-sm text-gray-500">
-                        {new Date(ticket.createdAt).toLocaleDateString()}
+                        {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'N/A'}
                       </TableCell>
                       <TableCell>
                         <Link to={`/ticket/${ticket.id}`}>
